@@ -41,8 +41,8 @@ const ChartRenderer = ({ data, chartType, isLoading }) => {
     if (!data || !chartType) return;
 
     try {
-      const { optimizedData, options } = prepareChartData(data, chartType);
-      setChartData(optimizedData);
+      const { chartData, options } = prepareChartData(data, chartType);
+      setChartData(chartData);
       setChartOptions(options);
       setError(null);
     } catch (err) {
@@ -115,7 +115,7 @@ const ChartRenderer = ({ data, chartType, isLoading }) => {
         throw new Error(`Unsupported chart type: ${type}`);
     }
 
-    return { optimizedData, options };
+    return { chartData, options };
   };
 
   const prepareBarChartData = (data, numericCols, categoricalCols, colors) => {
