@@ -74,13 +74,31 @@ const ChartRenderer = ({ data, chartType, isLoading }) => {
       typeof optimizedData[0][col] === 'string' && isNaN(optimizedData[0][col])
     );
 
-    // Generate colors using CSS custom properties
+    // Generate colors by computing CSS custom properties with fallbacks
+    const getComputedCSSColor = (cssVar, fallback) => {
+      try {
+        const computedValue = getComputedStyle(document.documentElement)
+          .getPropertyValue(cssVar)
+          .trim();
+        
+        // If it's an HSL value, convert to hsl() format
+        if (computedValue && !computedValue.startsWith('#') && !computedValue.startsWith('rgb')) {
+          return `hsl(${computedValue})`;
+        }
+        
+        return computedValue || fallback;
+      } catch (error) {
+        console.warn(`Failed to get CSS color for ${cssVar}:`, error);
+        return fallback;
+      }
+    };
+
     const colors = [
-      'var(--chart-1)',
-      'var(--chart-2)', 
-      'var(--chart-3)',
-      'var(--chart-4)',
-      'var(--chart-5)'
+      getComputedCSSColor('--chart-1', '#22c55e'), // Green
+      getComputedCSSColor('--chart-2', '#3b82f6'), // Blue
+      getComputedCSSColor('--chart-3', '#a855f7'), // Purple
+      getComputedCSSColor('--chart-4', '#f59e0b'), // Orange
+      getComputedCSSColor('--chart-5', '#10b981')  // Emerald
     ];
 
     let chartData = {};
