@@ -246,165 +246,230 @@ const ChartRenderer = ({ data, chartType, isLoading }) => {
     };
   };
 
-  const getBaseChartOptions = () => ({
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: {
-        position: 'top',
-        labels: {
-          color: 'var(--foreground)',
-          font: {
-            family: 'var(--font-sans)',
-          },
-          usePointStyle: true,
-        },
-      },
-      tooltip: {
-        backgroundColor: 'var(--popover)',
-        titleColor: 'var(--popover-foreground)',
-        bodyColor: 'var(--popover-foreground)',
-        borderColor: 'var(--border)',
-        borderWidth: 1,
-        cornerRadius: 8,
-        displayColors: true,
-        titleFont: {
-          family: 'var(--font-sans)',
-          weight: '600',
-        },
-        bodyFont: {
-          family: 'var(--font-sans)',
-        },
-      },
-    },
-    scales: {
-      x: {
-        grid: {
-          color: 'var(--border)',
-        },
-        ticks: {
-          color: 'var(--muted-foreground)',
-          font: {
-            family: 'var(--font-sans)',
+  const getBaseChartOptions = () => {
+    // Compute all theme colors outside the isolated container
+    const getThemeColor = (cssVar, fallback) => {
+      try {
+        const value = getComputedStyle(document.documentElement)
+          .getPropertyValue(cssVar)
+          .trim();
+        return value ? `hsl(${value})` : fallback;
+      } catch {
+        return fallback;
+      }
+    };
+
+    const themeColors = {
+      foreground: getThemeColor('--foreground', '#1f2937'),
+      mutedForeground: getThemeColor('--muted-foreground', '#6b7280'),
+      border: getThemeColor('--border', '#e5e7eb'),
+      popover: getThemeColor('--popover', '#ffffff'),
+      popoverForeground: getThemeColor('--popover-foreground', '#1f2937')
+    };
+
+    return {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: 'top',
+          labels: {
+            color: themeColors.foreground,
+            font: {
+              family: '"Outfit", sans-serif',
+              size: 12,
+              weight: '500',
+            },
+            usePointStyle: true,
+            padding: 20
           },
         },
-      },
-      y: {
-        grid: {
-          color: 'var(--border)',
-        },
-        ticks: {
-          color: 'var(--muted-foreground)',
-          font: {
-            family: 'var(--font-sans)',
+        tooltip: {
+          backgroundColor: themeColors.popover,
+          titleColor: themeColors.popoverForeground,
+          bodyColor: themeColors.popoverForeground,
+          borderColor: themeColors.border,
+          borderWidth: 1,
+          cornerRadius: 8,
+          displayColors: true,
+          titleFont: {
+            family: '"Outfit", sans-serif',
+            weight: '600',
+          },
+          bodyFont: {
+            family: '"Outfit", sans-serif',
           },
         },
       },
-    },
-  });
-
-  const getBarChartOptions = () => ({
-    ...getBaseChartOptions(),
-    plugins: {
-      ...getBaseChartOptions().plugins,
-      title: {
-        display: true,
-        text: 'Bar Chart',
-        color: 'var(--foreground)',
-        font: {
-          family: 'var(--font-sans)',
-          size: 16,
-          weight: '600',
+      scales: {
+        x: {
+          grid: {
+            color: themeColors.border,
+            drawBorder: false
+          },
+          ticks: {
+            color: themeColors.mutedForeground,
+            font: {
+              family: '"Outfit", sans-serif',
+              size: 11,
+            },
+          },
+        },
+        y: {
+          grid: {
+            color: themeColors.border,
+            drawBorder: false
+          },
+          ticks: {
+            color: themeColors.mutedForeground,
+            font: {
+              family: '"Outfit", sans-serif',
+              size: 11,
+            },
+          },
         },
       },
-    },
-  });
+    };
+  };
 
-  const getLineChartOptions = () => ({
-    ...getBaseChartOptions(),
-    plugins: {
-      ...getBaseChartOptions().plugins,
-      title: {
-        display: true,
-        text: 'Line Chart',
-        color: 'var(--foreground)',
-        font: {
-          family: 'var(--font-sans)',
-          size: 16,
-          weight: '600',
+  const getBarChartOptions = () => {
+    const baseOptions = getBaseChartOptions();
+    const foreground = getComputedStyle(document.documentElement)
+      .getPropertyValue('--foreground').trim();
+    
+    return {
+      ...baseOptions,
+      plugins: {
+        ...baseOptions.plugins,
+        title: {
+          display: true,
+          text: 'Bar Chart',
+          color: foreground ? `hsl(${foreground})` : '#1f2937',
+          font: {
+            family: '"Outfit", sans-serif',
+            size: 16,
+            weight: '600',
+          },
         },
       },
-    },
-  });
+    };
+  };
 
-  const getPieChartOptions = () => ({
-    ...getBaseChartOptions(),
-    plugins: {
-      ...getBaseChartOptions().plugins,
-      title: {
-        display: true,
-        text: 'Pie Chart',
-        color: 'var(--foreground)',
-        font: {
-          family: 'var(--font-sans)',
-          size: 16,
-          weight: '600',
+  const getLineChartOptions = () => {
+    const baseOptions = getBaseChartOptions();
+    const foreground = getComputedStyle(document.documentElement)
+      .getPropertyValue('--foreground').trim();
+    
+    return {
+      ...baseOptions,
+      plugins: {
+        ...baseOptions.plugins,
+        title: {
+          display: true,
+          text: 'Line Chart',
+          color: foreground ? `hsl(${foreground})` : '#1f2937',
+          font: {
+            family: '"Outfit", sans-serif',
+            size: 16,
+            weight: '600',
+          },
         },
       },
-    },
-  });
+    };
+  };
 
-  const getDoughnutChartOptions = () => ({
-    ...getBaseChartOptions(),
-    plugins: {
-      ...getBaseChartOptions().plugins,
-      title: {
-        display: true,
-        text: 'Doughnut Chart',
-        color: 'var(--foreground)',
-        font: {
-          family: 'var(--font-sans)',
-          size: 16,
-          weight: '600',
+  const getPieChartOptions = () => {
+    const baseOptions = getBaseChartOptions();
+    const foreground = getComputedStyle(document.documentElement)
+      .getPropertyValue('--foreground').trim();
+    
+    return {
+      ...baseOptions,
+      plugins: {
+        ...baseOptions.plugins,
+        title: {
+          display: true,
+          text: 'Pie Chart',
+          color: foreground ? `hsl(${foreground})` : '#1f2937',
+          font: {
+            family: '"Outfit", sans-serif',
+            size: 16,
+            weight: '600',
+          },
         },
       },
-    },
-    cutout: '60%',
-  });
+    };
+  };
 
-  const getAreaChartOptions = () => ({
-    ...getBaseChartOptions(),
-    plugins: {
-      ...getBaseChartOptions().plugins,
-      title: {
-        display: true,
-        text: 'Area Chart',
-        color: 'var(--foreground)',
-        font: {
-          family: 'var(--font-sans)',
-          size: 16,
-          weight: '600',
+  const getDoughnutChartOptions = () => {
+    const baseOptions = getBaseChartOptions();
+    const foreground = getComputedStyle(document.documentElement)
+      .getPropertyValue('--foreground').trim();
+    
+    return {
+      ...baseOptions,
+      plugins: {
+        ...baseOptions.plugins,
+        title: {
+          display: true,
+          text: 'Doughnut Chart',
+          color: foreground ? `hsl(${foreground})` : '#1f2937',
+          font: {
+            family: '"Outfit", sans-serif',
+            size: 16,
+            weight: '600',
+          },
         },
       },
-    },
-  });
+      cutout: '60%',
+    };
+  };
 
-  const getScatterChartOptions = () => ({
-    ...getBaseChartOptions(),
-    plugins: {
-      ...getBaseChartOptions().plugins,
-      title: {
-        display: true,
-        text: 'Scatter Plot',
-        color: 'var(--foreground)',
-        font: {
-          family: 'var(--font-sans)',
-          size: 16,
-          weight: '600',
+  const getAreaChartOptions = () => {
+    const baseOptions = getBaseChartOptions();
+    const foreground = getComputedStyle(document.documentElement)
+      .getPropertyValue('--foreground').trim();
+    
+    return {
+      ...baseOptions,
+      plugins: {
+        ...baseOptions.plugins,
+        title: {
+          display: true,
+          text: 'Area Chart',
+          color: foreground ? `hsl(${foreground})` : '#1f2937',
+          font: {
+            family: '"Outfit", sans-serif',
+            size: 16,
+            weight: '600',
+          },
         },
       },
-    },
-  });
+    };
+  };
+
+  const getScatterChartOptions = () => {
+    const baseOptions = getBaseChartOptions();
+    const foreground = getComputedStyle(document.documentElement)
+      .getPropertyValue('--foreground').trim();
+    
+    return {
+      ...baseOptions,
+      plugins: {
+        ...baseOptions.plugins,
+        title: {
+          display: true,
+          text: 'Scatter Plot',
+          color: foreground ? `hsl(${foreground})` : '#1f2937',
+          font: {
+            family: '"Outfit", sans-serif',
+            size: 16,
+            weight: '600',
+          },
+        },
+      },
+    };
+  };
 
   const renderChart = () => {
     if (!chartData || !chartOptions) return null;
