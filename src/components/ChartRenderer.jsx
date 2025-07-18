@@ -415,22 +415,54 @@ const ChartRenderer = ({ data, chartType, isLoading }) => {
       options: chartOptions,
     };
 
-    switch (chartType) {
-      case 'bar':
-        return <Bar {...chartProps} />;
-      case 'line':
-        return <Line {...chartProps} />;
-      case 'pie':
-        return <Pie {...chartProps} />;
-      case 'doughnut':
-        return <Doughnut {...chartProps} />;
-          case 'area':
-      return <Line {...chartProps} />;
-      case 'scatter':
-        return <Scatter {...chartProps} />;
-      default:
-        return <div className="text-center text-muted-foreground">Unsupported chart type</div>;
-    }
+    // Wrap chart in isolated container to prevent CSS interference
+    const chartElement = (() => {
+      switch (chartType) {
+        case 'bar':
+          return <Bar {...chartProps} />;
+        case 'line':
+          return <Line {...chartProps} />;
+        case 'pie':
+          return <Pie {...chartProps} />;
+        case 'doughnut':
+          return <Doughnut {...chartProps} />;
+        case 'area':
+          return <Line {...chartProps} />;
+        case 'scatter':
+          return <Scatter {...chartProps} />;
+        default:
+          return <div className="text-center text-muted-foreground">Unsupported chart type</div>;
+      }
+    })();
+
+    return (
+      <div className="chart-container" style={{
+        // Isolate from global CSS
+        all: 'initial',
+        fontFamily: 'var(--font-sans, "Outfit", sans-serif)',
+        fontSize: '14px',
+        // Restore Chart.js defaults
+        display: 'block',
+        position: 'relative',
+        height: '400px',
+        width: '100%',
+        // Ensure canvas renders properly
+        overflow: 'hidden'
+      }}>
+        <style>
+          {`
+            .chart-container canvas {
+              display: block !important;
+              height: 100% !important;
+              width: 100% !important;
+              max-width: 100% !important;
+              max-height: 100% !important;
+            }
+          `}
+        </style>
+        {chartElement}
+      </div>
+    );
   };
 
   if (isLoading) {
