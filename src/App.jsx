@@ -14,6 +14,7 @@ function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [compatibilityScore, setCompatibilityScore] = useState(null);
+  const chartRef = React.useRef(null);
 
   React.useEffect(() => {
     // Initialize accessibility features
@@ -171,6 +172,7 @@ function App() {
                   </div>
                 </div>
                 <ChartRenderer
+                  ref={chartRef}
                   data={data}
                   chartType={selectedChartType}
                   isLoading={isLoading}
