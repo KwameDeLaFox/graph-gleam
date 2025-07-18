@@ -3,7 +3,7 @@ import FileUpload from './components/FileUpload';
 import ChartTypeSelector from './components/ChartTypeSelector';
 import ChartRenderer from './components/ChartRenderer';
 import ErrorBoundary from './components/ErrorBoundary';
-import { loadSampleData } from './utils/sample-data-loader';
+import { loadSampleData, getAllSamples } from './utils/sample-data-loader';
 import { testEdgeCases } from './utils/test-edge-cases';
 import { testBrowserCompatibility } from './utils/browser-testing';
 import { setupAccessibility } from './utils/accessibility-helpers';
@@ -40,12 +40,12 @@ function App() {
     }
   };
 
-  const handleLoadSample = async () => {
+  const handleLoadSample = async (sampleKey = 'SALES_CSV') => {
     setIsLoading(true);
     setError(null);
     
     try {
-      const sampleData = await loadSampleData();
+      const sampleData = await loadSampleData(sampleKey);
       setData(sampleData);
     } catch (err) {
       setError(err.message);
@@ -108,13 +108,17 @@ function App() {
                   </p>
                 </div>
                 <div className="flex flex-col sm:flex-row gap-3">
-                  <button
-                    onClick={handleLoadSample}
-                    disabled={isLoading}
-                    className="px-4 py-2 bg-secondary text-secondary-foreground rounded-md border border-border hover:bg-accent hover:text-accent-foreground transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {isLoading ? 'Loading...' : 'Load Sample Data'}
-                  </button>
+                  {getAllSamples().map(sample => (
+                    <button
+                      key={sample.key}
+                      onClick={() => handleLoadSample(sample.key)}
+                      disabled={isLoading}
+                      className="px-4 py-2 bg-secondary text-secondary-foreground rounded-md border border-border hover:bg-accent hover:text-accent-foreground transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+                      title={sample.description}
+                    >
+                      {isLoading ? 'Loading...' : sample.name}
+                    </button>
+                  ))}
                 </div>
               </div>
               
@@ -188,12 +192,18 @@ function App() {
                   <p className="text-muted-foreground mb-4">
                     Upload a CSV or Excel file to get started with your visualization
                   </p>
-                  <button
-                    onClick={handleLoadSample}
-                    className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
-                  >
-                    Try Sample Data
-                  </button>
+                  <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                    {getAllSamples().map(sample => (
+                      <button
+                        key={sample.key}
+                        onClick={() => handleLoadSample(sample.key)}
+                        className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors text-sm"
+                        title={sample.description}
+                      >
+                        Try {sample.name}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </section>
             )}
