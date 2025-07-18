@@ -74,19 +74,61 @@ const ChartRenderer = ({ data, chartType, isLoading }) => {
       typeof optimizedData[0][col] === 'string' && isNaN(optimizedData[0][col])
     );
 
-    // Use vibrant colors directly for now (CSS computation wasn't working)
-    const colors = [
-      '#22c55e', // Green
-      '#3b82f6', // Blue  
-      '#a855f7', // Purple
-      '#f59e0b', // Orange
-      '#10b981', // Emerald
-      '#ef4444', // Red
-      '#06b6d4', // Cyan
-      '#8b5cf6'  // Violet
-    ];
+    // Get chart colors from CSS custom properties (design system integration)
+    const getChartColors = () => {
+      const colorVars = ['--chart-1', '--chart-2', '--chart-3', '--chart-4', '--chart-5'];
+      const colors = [];
+      
+      colorVars.forEach((colorVar, index) => {
+        try {
+          // Get the HSL values from CSS custom property
+          const hslValues = getComputedStyle(document.documentElement)
+            .getPropertyValue(colorVar)
+            .trim();
+          
+          if (hslValues) {
+            // CSS stores HSL as "151.3274 66.8639% 66.8627%" - convert to "hsl(151.3274, 66.8639%, 66.8627%)"
+            const hslColor = `hsl(${hslValues.replace(/\s+/g, ', ')})`;
+            colors.push(hslColor);
+          } else {
+            // Fallback colors if CSS custom properties fail
+            const fallbacks = [
+              'hsl(151, 67%, 67%)', // Green
+              'hsl(217, 91%, 60%)', // Blue
+              'hsl(258, 89%, 66%)', // Purple  
+              'hsl(38, 92%, 50%)',  // Orange
+              'hsl(160, 84%, 39%)'  // Emerald
+            ];
+            colors.push(fallbacks[index] || `hsl(${index * 60}, 70%, 55%)`);
+          }
+        } catch (error) {
+          console.warn(`Failed to get color for ${colorVar}:`, error);
+          // Ultimate fallback
+          const fallbacks = ['#22c55e', '#3b82f6', '#a855f7', '#f59e0b', '#10b981'];
+          colors.push(fallbacks[index] || '#6b7280');
+        }
+      });
+      
+      return colors;
+    };
+
+    const colors = getChartColors();
+    console.log('Chart colors from design system:', colors);
     
-    console.log('Chart colors:', colors);
+    // Helper function to add transparency to colors
+    const addTransparency = (color, opacity = 0.2) => {
+      if (color.startsWith('hsl(')) {
+        return color.replace('hsl(', `hsla(`).replace(')', `, ${opacity})`);
+      } else if (color.startsWith('#')) {
+        // Convert hex to rgba with opacity
+        const hex = color.replace('#', '');
+        const r = parseInt(hex.substr(0, 2), 16);
+        const g = parseInt(hex.substr(2, 2), 16);
+        const b = parseInt(hex.substr(4, 2), 16);
+        return `rgba(${r}, ${g}, ${b}, ${opacity})`;
+      }
+      return color;
+    };
 
     let chartData = {};
     let options = {};
@@ -142,7 +184,7 @@ const ChartRenderer = ({ data, chartType, isLoading }) => {
       label: col,
       data: data.map(row => parseFloat(row[col]) || 0),
       borderColor: colors[index % colors.length],
-      backgroundColor: colors[index % colors.length] + '20',
+      backgroundColor: addTransparency(colors[index % colors.length], 0.1),
       borderWidth: 2,
       fill: false,
       tension: 0.4,
@@ -172,7 +214,7 @@ const ChartRenderer = ({ data, chartType, isLoading }) => {
       label: col,
       data: data.map(row => parseFloat(row[col]) || 0),
       borderColor: colors[index % colors.length],
-      backgroundColor: colors[index % colors.length] + '40',
+      backgroundColor: addTransparency(colors[index % colors.length], 0.3),
       borderWidth: 2,
       fill: true,
       tension: 0.4,
