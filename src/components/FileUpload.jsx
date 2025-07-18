@@ -7,6 +7,7 @@ import { handleError } from '../utils/error-handler';
 const FileUpload = ({ onFileUpload, isLoading }) => {
   const [dragActive, setDragActive] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [isFileDialogOpen, setIsFileDialogOpen] = useState(false);
   const fileInputRef = useRef(null);
 
   const handleDrag = (e) => {
@@ -30,9 +31,12 @@ const FileUpload = ({ onFileUpload, isLoading }) => {
   };
 
   const handleFileSelect = async (e) => {
+    setIsFileDialogOpen(false);
     if (e.target.files && e.target.files[0]) {
       await processFile(e.target.files[0]);
     }
+    // Clear the input value to allow selecting the same file again
+    e.target.value = '';
   };
 
   const processFile = async (file) => {
@@ -87,6 +91,11 @@ const FileUpload = ({ onFileUpload, isLoading }) => {
   };
 
   const openFileDialog = () => {
+    // Prevent opening if already loading, processing, or if dialog is already open
+    if (isLoading || uploadProgress > 0 || isFileDialogOpen) {
+      return;
+    }
+    setIsFileDialogOpen(true);
     fileInputRef.current?.click();
   };
 
@@ -98,6 +107,7 @@ const FileUpload = ({ onFileUpload, isLoading }) => {
         type="file"
         accept=".csv,.xlsx,.xls"
         onChange={handleFileSelect}
+        onBlur={() => setIsFileDialogOpen(false)}
         className="hidden"
         disabled={isLoading}
       />
@@ -165,7 +175,10 @@ const FileUpload = ({ onFileUpload, isLoading }) => {
           <button
             type="button"
             className="mt-4 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors font-medium"
-            onClick={openFileDialog}
+            onClick={(e) => {
+              e.stopPropagation();
+              openFileDialog();
+            }}
           >
             Choose File
           </button>
