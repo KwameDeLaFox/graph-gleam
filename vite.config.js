@@ -11,5 +11,12 @@ export default defineConfig({
   preview: {
     host: '0.0.0.0',
     port: process.env.PORT || 4173,
+    // Allow all hosts in production, specific hosts in development
+    allowedHosts: process.env.NODE_ENV === 'production' ? true : [
+      'graph-gleam.onrender.com',
+      'localhost',
+      '127.0.0.1',
+      '0.0.0.0'
+    ]
   }
 })
