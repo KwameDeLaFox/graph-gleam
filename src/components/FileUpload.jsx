@@ -1,425 +1,181 @@
-import React, { useState, useRef, useCallback } from 'react';
-import { 
-  MAX_FILE_SIZE, 
-  SUPPORTED_FILE_TYPES, 
-  SUPPORTED_MIME_TYPES, 
-  ERROR_TYPES 
-} from '../utils/constants.js';
-import { 
-  handleFileUploadError, 
-  getUserFriendlyError, 
-  getRecoverySuggestions,
-  clearErrors 
-} from '../utils/error-handler.js';
+import React, { useState, useRef } from 'react';
+import { parseCSV } from '../utils/parsers/csv-parser';
+import { parseExcel } from '../utils/parsers/excel-parser';
+import { validateDataForCharting } from '../utils/validators/data-validator';
+import { handleError } from '../utils/error-handler';
 
-/**
- * File Upload Component with drag-and-drop functionality
- * Validates file types and sizes, integrates with error handler
- */
-const FileUpload = ({ 
-  onFileSelect, 
-  onError, 
-  disabled = false, 
-  accept = [SUPPORTED_FILE_TYPES.CSV, SUPPORTED_FILE_TYPES.EXCEL].join(','),
-  maxSize = MAX_FILE_SIZE,
-  className = ''
-}) => {
+const FileUpload = ({ onFileUpload, isLoading }) => {
   const [dragActive, setDragActive] = useState(false);
-  const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
-  const [lastError, setLastError] = useState(null);
-  const [lastSuccess, setLastSuccess] = useState(null);
-  
-  const inputRef = useRef(null);
-  const dropRef = useRef(null);
+  const fileInputRef = useRef(null);
 
-  /**
-   * Validate uploaded file
-   * @param {File} file - File to validate
-   * @returns {Object|null} Error object if validation fails, null if valid
-   */
-  const validateFile = useCallback((file) => {
-    // Check file type
-    const fileExtension = '.' + file.name.split('.').pop().toLowerCase();
-    const isValidType = Object.values(SUPPORTED_FILE_TYPES).includes(fileExtension) ||
-                       SUPPORTED_MIME_TYPES.includes(file.type);
-
-    if (!isValidType) {
-      return handleFileUploadError(file, {
-        type: ERROR_TYPES.FILE_TYPE,
-        message: `Unsupported file type: ${fileExtension}. Please use CSV or Excel files.`
-      });
-    }
-
-    // Check file size
-    if (file.size > maxSize) {
-      return handleFileUploadError(file, {
-        type: ERROR_TYPES.FILE_SIZE,
-        message: `File size (${formatFileSize(file.size)}) exceeds limit of ${formatFileSize(maxSize)}.`
-      });
-    }
-
-    // Check if file is empty
-    if (file.size === 0) {
-      return handleFileUploadError(file, {
-        type: ERROR_TYPES.EMPTY_FILE,
-        message: 'File is empty or corrupted.'
-      });
-    }
-
-    return null; // File is valid
-  }, [maxSize]);
-
-  /**
-   * Handle file processing
-   * @param {File} file - File to process
-   */
-  const processFile = useCallback(async (file) => {
-    try {
-      setUploading(true);
-      setUploadProgress(0);
-      setLastError(null);
-      setLastSuccess(null);
-      
-      // Clear any previous errors
-      clearErrors();
-
-      // Simulate upload progress
-      const progressInterval = setInterval(() => {
-        setUploadProgress(prev => {
-          if (prev >= 90) {
-            clearInterval(progressInterval);
-            return 90;
-          }
-          return prev + Math.random() * 20;
-        });
-      }, 100);
-
-      // Validate file
-      const validationError = validateFile(file);
-      if (validationError) {
-        clearInterval(progressInterval);
-        setUploadProgress(0);
-        setLastError(validationError);
-        if (onError) {
-          onError(validationError);
-        }
-        return;
-      }
-
-      // Simulate processing delay
-      await new Promise(resolve => setTimeout(resolve, 500));
-
-      // Complete upload
-      clearInterval(progressInterval);
-      setUploadProgress(100);
-      
-      // Success!
-      setLastSuccess({
-        filename: file.name,
-        size: file.size,
-        type: file.type
-      });
-
-      // Call success callback
-      if (onFileSelect) {
-        onFileSelect(file);
-      }
-
-      // Reset after showing success
-      setTimeout(() => {
-        setUploadProgress(0);
-        setLastSuccess(null);
-      }, 2000);
-
-    } catch (error) {
-      setUploadProgress(0);
-      const uploadError = handleFileUploadError(file, {
-        type: ERROR_TYPES.PARSE_ERROR,
-        message: `Failed to process file: ${error.message}`
-      });
-      setLastError(uploadError);
-      if (onError) {
-        onError(uploadError);
-      }
-    } finally {
-      setUploading(false);
-    }
-  }, [validateFile, onFileSelect, onError]);
-
-  /**
-   * Handle file selection from input or drag-drop
-   * @param {FileList} files - Selected files
-   */
-  const handleFiles = useCallback((files) => {
-    if (!files || files.length === 0) return;
-
-    // Only process the first file for now
-    const file = files[0];
-    processFile(file);
-  }, [processFile]);
-
-  /**
-   * Handle drag events
-   */
-  const handleDragEnter = useCallback((e) => {
+  const handleDrag = (e) => {
     e.preventDefault();
     e.stopPropagation();
-    if (!disabled) {
+    if (e.type === "dragenter" || e.type === "dragover") {
       setDragActive(true);
-    }
-  }, [disabled]);
-
-  const handleDragLeave = useCallback((e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    
-    // Only set dragActive to false if we're leaving the drop area
-    if (!dropRef.current?.contains(e.relatedTarget)) {
+    } else if (e.type === "dragleave") {
       setDragActive(false);
     }
-  }, []);
+  };
 
-  const handleDragOver = useCallback((e) => {
-    e.preventDefault();
-    e.stopPropagation();
-  }, []);
-
-  const handleDrop = useCallback((e) => {
+  const handleDrop = async (e) => {
     e.preventDefault();
     e.stopPropagation();
     setDragActive(false);
-
-    if (!disabled) {
-      const files = e.dataTransfer.files;
-      handleFiles(files);
+    
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      await processFile(e.dataTransfer.files[0]);
     }
-  }, [disabled, handleFiles]);
-
-  /**
-   * Handle click to open file dialog
-   */
-  const handleClick = useCallback(() => {
-    if (!disabled && inputRef.current) {
-      inputRef.current.click();
-    }
-  }, [disabled]);
-
-  /**
-   * Handle file input change
-   */
-  const handleInputChange = useCallback((e) => {
-    handleFiles(e.target.files);
-    // Reset input so same file can be selected again
-    if (inputRef.current) {
-      inputRef.current.value = '';
-    }
-  }, [handleFiles]);
-
-  /**
-   * Format file size for display
-   * @param {number} bytes - File size in bytes
-   * @returns {string} Formatted file size
-   */
-  const formatFileSize = (bytes) => {
-    if (bytes === 0) return '0 Bytes';
-    const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
-  /**
-   * Get upload area styling based on state
-   */
-  const getUploadAreaClasses = () => {
-    const baseClasses = `
-      relative w-full min-h-40 sm:min-h-48 border-2 border-dashed rounded-lg 
-      transition-all duration-200 ease-in-out cursor-pointer
-      flex flex-col items-center justify-center p-4 sm:p-8 text-center touch-manipulation
-    `;
-
-    if (disabled) {
-      return baseClasses + ` 
-        border-gray-300 bg-gray-50 cursor-not-allowed opacity-50
-      `;
+  const handleFileSelect = async (e) => {
+    if (e.target.files && e.target.files[0]) {
+      await processFile(e.target.files[0]);
     }
-
-    if (lastError) {
-      return baseClasses + ` 
-        border-red-300 bg-red-50 hover:border-red-400 hover:bg-red-100
-      `;
-    }
-
-    if (lastSuccess) {
-      return baseClasses + ` 
-        border-green-300 bg-green-50 hover:border-green-400 hover:bg-green-100
-      `;
-    }
-
-    if (dragActive) {
-      return baseClasses + ` 
-        border-blue-400 bg-blue-50 scale-105 shadow-lg
-      `;
-    }
-
-    if (uploading) {
-      return baseClasses + ` 
-        border-blue-300 bg-blue-50
-      `;
-    }
-
-    return baseClasses + ` 
-      border-gray-300 bg-gray-50 hover:border-gray-400 hover:bg-gray-100
-      focus-within:border-blue-400 focus-within:ring-2 focus-within:ring-blue-100
-    `;
   };
 
-  /**
-   * Render upload content based on state
-   */
-  const renderUploadContent = () => {
-    if (uploading) {
-      return (
-        <div className="w-full max-w-xs">
-          <div className="flex items-center justify-center mb-4">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-          </div>
-          <p className="text-sm text-gray-600 mb-2">Uploading file...</p>
-          <div className="w-full bg-gray-200 rounded-full h-2">
-            <div 
-              className="bg-blue-600 h-2 rounded-full transition-all duration-300 ease-out"
-              style={{ width: `${uploadProgress}%` }}
-            ></div>
-          </div>
-          <p className="text-xs text-gray-500 mt-1">{Math.round(uploadProgress)}%</p>
-        </div>
-      );
+  const processFile = async (file) => {
+    try {
+      // Validate file type
+      const fileName = file.name.toLowerCase();
+      if (!fileName.endsWith('.csv') && !fileName.endsWith('.xlsx') && !fileName.endsWith('.xls')) {
+        throw new Error('Please upload a CSV or Excel file (.csv, .xlsx, .xls)');
+      }
+
+      // Validate file size (5MB limit)
+      if (file.size > 5 * 1024 * 1024) {
+        throw new Error('File size must be less than 5MB');
+      }
+
+      setUploadProgress(10);
+
+      // Parse file based on type
+      let parsedData;
+      if (fileName.endsWith('.csv')) {
+        parsedData = await parseCSV(file);
+      } else {
+        parsedData = await parseExcel(file);
+      }
+
+      setUploadProgress(50);
+
+      if (!parsedData.success) {
+        throw new Error(parsedData.errors?.[0]?.message || 'Failed to parse file');
+      }
+
+      // Validate data for charting
+      const validation = validateDataForCharting(parsedData.data, parsedData.meta);
+      setUploadProgress(80);
+
+      if (!validation.isValid) {
+        throw new Error(validation.errors?.[0]?.message || 'Data is not suitable for charting');
+      }
+
+      setUploadProgress(100);
+
+      // Success - pass data to parent
+      onFileUpload(parsedData.data);
+
+    } catch (error) {
+      const userFriendlyError = handleError(error);
+      console.error('File processing error:', userFriendlyError);
+      throw userFriendlyError;
+    } finally {
+      setUploadProgress(0);
     }
+  };
 
-    if (lastSuccess) {
-      return (
-        <div className="text-center">
-          <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100 mb-4">
-            <svg className="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-            </svg>
-          </div>
-          <h3 className="text-sm font-medium text-green-900 mb-1">File uploaded successfully!</h3>
-          <p className="text-xs text-green-700">{lastSuccess.filename}</p>
-          <p className="text-xs text-green-600">{formatFileSize(lastSuccess.size)}</p>
-        </div>
-      );
-    }
-
-    if (lastError) {
-      const friendlyError = getUserFriendlyError(lastError);
-      const suggestions = getRecoverySuggestions(lastError);
-
-      return (
-        <div className="text-center max-w-md">
-          <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
-            <span className="text-2xl">{friendlyError.icon}</span>
-          </div>
-          <h3 className="text-sm font-medium text-red-900 mb-1">{friendlyError.title}</h3>
-          <p className="text-xs text-red-700 mb-3">{friendlyError.message}</p>
-          
-          {suggestions.length > 0 && (
-            <div className="text-left">
-              <p className="text-xs font-medium text-red-800 mb-2">How to fix:</p>
-              <ul className="text-xs text-red-700 space-y-1">
-                {suggestions.slice(0, 3).map((suggestion, index) => (
-                  <li key={index} className="flex items-start">
-                    <span className="text-red-400 mr-1">•</span>
-                    {suggestion}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-          
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              setLastError(null);
-              clearErrors();
-            }}
-            className="mt-3 text-xs text-red-600 hover:text-red-800 underline"
-          >
-            Try again
-          </button>
-        </div>
-      );
-    }
-
-    // Default upload prompt
-    return (
-      <div className="text-center">
-        <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-gray-100 mb-4">
-          <svg className="h-6 w-6 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
-                  d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-          </svg>
-        </div>
-        
-        <div className="space-y-2">
-          <p className="text-sm sm:text-base font-medium text-gray-900">
-            {dragActive ? 'Drop your file here' : 'Upload your data file'}
-          </p>
-          <p className="text-xs sm:text-sm text-gray-600">
-            <span className="hidden sm:inline">Drag and drop or </span>
-            <span className="text-blue-600 underline">
-              {window.innerWidth < 640 ? 'Tap to browse files' : 'click to browse'}
-            </span>
-          </p>
-          <p className="text-xs text-gray-500">
-            Supports CSV and Excel files up to {formatFileSize(maxSize)}
-          </p>
-        </div>
-      </div>
-    );
+  const openFileDialog = () => {
+    fileInputRef.current?.click();
   };
 
   return (
-    <div className={`file-upload-component ${className}`}>
-      <div
-        ref={dropRef}
-        className={getUploadAreaClasses()}
-        onDragEnter={handleDragEnter}
-        onDragLeave={handleDragLeave}
-        onDragOver={handleDragOver}
-        onDrop={handleDrop}
-        onClick={handleClick}
-        role="button"
-        tabIndex={0}
-        aria-label="File upload area"
-        onKeyDown={(e) => {
-          if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault();
-            handleClick();
-          }
-        }}
-      >
-        {/* Hidden file input */}
-        <input
-          ref={inputRef}
-          type="file"
-          className="hidden"
-          accept={accept}
-          onChange={handleInputChange}
-          disabled={disabled}
-          aria-hidden="true"
-        />
+    <div className="w-full">
+      {/* Hidden file input */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".csv,.xlsx,.xls"
+        onChange={handleFileSelect}
+        className="hidden"
+        disabled={isLoading}
+      />
 
-        {/* Upload content */}
-        {renderUploadContent()}
+      {/* Upload area */}
+      <div
+        className={`relative border-2 border-dashed rounded-lg p-8 text-center transition-all duration-200 ${
+          dragActive
+            ? 'border-primary bg-primary/5'
+            : 'border-border hover:border-primary/50 hover:bg-muted/50'
+        } ${isLoading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+        onDragEnter={handleDrag}
+        onDragLeave={handleDrag}
+        onDragOver={handleDrag}
+        onDrop={handleDrop}
+        onClick={!isLoading ? openFileDialog : undefined}
+      >
+        {/* Upload progress overlay */}
+        {uploadProgress > 0 && uploadProgress < 100 && (
+          <div className="absolute inset-0 bg-background/80 rounded-lg flex items-center justify-center">
+            <div className="text-center">
+              <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
+              <p className="text-sm text-muted-foreground">Processing file... {uploadProgress}%</p>
+            </div>
+          </div>
+        )}
+
+        {/* Upload icon */}
+        <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
+          <svg className="w-8 h-8 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+          </svg>
+        </div>
+
+        {/* Upload text */}
+        <div className="space-y-2">
+          <h3 className="text-lg font-medium text-foreground">
+            {isLoading ? 'Processing...' : 'Upload your data file'}
+          </h3>
+          <p className="text-muted-foreground">
+            {isLoading 
+              ? 'Please wait while we process your file'
+              : 'Drag and drop your CSV or Excel file here, or click to browse'
+            }
+          </p>
+        </div>
+
+        {/* File type info */}
+        {!isLoading && (
+          <div className="mt-4 flex flex-wrap justify-center gap-2">
+            <span className="px-2 py-1 bg-secondary text-secondary-foreground text-xs rounded-md border border-border">
+              CSV files
+            </span>
+            <span className="px-2 py-1 bg-secondary text-secondary-foreground text-xs rounded-md border border-border">
+              Excel files
+            </span>
+            <span className="px-2 py-1 bg-secondary text-secondary-foreground text-xs rounded-md border border-border">
+              Max 5MB
+            </span>
+          </div>
+        )}
+
+        {/* Upload button */}
+        {!isLoading && (
+          <button
+            type="button"
+            className="mt-4 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors font-medium"
+            onClick={openFileDialog}
+          >
+            Choose File
+          </button>
+        )}
       </div>
 
-      {/* File format info */}
-      <div className="mt-3 text-center">
-        <p className="text-xs text-gray-500">
-          Supported formats: <span className="font-medium">CSV (.csv)</span> and{' '}
-          <span className="font-medium">Excel (.xlsx)</span>
+      {/* Help text */}
+      <div className="mt-4 text-center">
+        <p className="text-xs text-muted-foreground">
+          Supported formats: CSV (.csv), Excel (.xlsx, .xls) • Maximum file size: 5MB
         </p>
       </div>
     </div>
