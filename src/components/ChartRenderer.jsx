@@ -15,6 +15,8 @@ import {
 } from 'chart.js';
 import { Bar, Line, Pie, Doughnut, PolarArea, Scatter } from 'react-chartjs-2';
 import { optimizeForPerformance } from '../utils/performance-optimizer';
+import { useToast } from './ui/Toast';
+import LoadingSpinner from './ui/LoadingSpinner';
 import './charts.css';
 
 // Register Chart.js components
@@ -37,21 +39,41 @@ const ChartRenderer = React.forwardRef(({ data, chartType, isLoading }, ref) => 
   const [chartData, setChartData] = useState(null);
   const [chartOptions, setChartOptions] = useState(null);
   const [error, setError] = useState(null);
+  const [exportingFormat, setExportingFormat] = useState(null);
+  const [copyingEmbed, setCopyingEmbed] = useState(false);
+  const { addToast } = useToast();
 
   // Internal export functions
-  const exportChart = (format = 'png', filename = 'chart') => {
-    if (!internalChartRef.current?.canvas) return null;
-    
-    const canvas = internalChartRef.current.canvas;
-    const quality = format === 'jpeg' ? 0.9 : 1.0;
-    const mimeType = `image/${format}`;
-    
-    const link = document.createElement('a');
-    link.download = `${filename}-${chartType}-${Date.now()}.${format}`;
-    link.href = canvas.toDataURL(mimeType, quality);
-    link.click();
-    
-    return link.href;
+  const exportChart = async (format = 'png', filename = 'chart') => {
+    try {
+      setExportingFormat(format);
+      
+      if (!internalChartRef.current?.canvas) {
+        addToast('Chart not ready for export', 'error');
+        return null;
+      }
+      
+      // Small delay to show loading state
+      await new Promise(resolve => setTimeout(resolve, 200));
+      
+      const canvas = internalChartRef.current.canvas;
+      const quality = format === 'jpeg' ? 0.9 : 1.0;
+      const mimeType = `image/${format}`;
+      
+      const link = document.createElement('a');
+      link.download = `${filename}-${chartType}-${Date.now()}.${format}`;
+      link.href = canvas.toDataURL(mimeType, quality);
+      link.click();
+      
+      addToast(`Chart exported as ${format.toUpperCase()}!`, 'success');
+      return link.href;
+    } catch (error) {
+      addToast('Failed to export chart', 'error');
+      console.error('Export error:', error);
+      return null;
+    } finally {
+      setExportingFormat(null);
+    }
   };
   
   const getChartInstance = () => {
@@ -422,8 +444,9 @@ const ChartRenderer = React.forwardRef(({ data, chartType, isLoading }, ref) => 
     return (
       <div className="flex items-center justify-center h-96 bg-muted/20 rounded-lg border border-border">
         <div className="text-center">
-          <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Generating chart...</p>
+          <LoadingSpinner size="xl" className="mx-auto mb-4" />
+          <p className="text-muted-foreground font-medium">Generating chart...</p>
+          <p className="text-xs text-muted-foreground/70 mt-1">This may take a few seconds</p>
         </div>
       </div>
     );
@@ -467,42 +490,70 @@ const ChartRenderer = React.forwardRef(({ data, chartType, isLoading }, ref) => 
             <div className="flex items-center gap-2">
               <button
                 onClick={() => exportChart('png', `chart-${chartType}`)}
-                className="px-3 py-1 bg-primary text-primary-foreground rounded-md text-xs hover:bg-primary/90 transition-colors"
+                disabled={exportingFormat === 'png'}
+                className="px-3 py-1 bg-primary text-primary-foreground rounded-md text-xs hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
                 title="Download chart as PNG image"
               >
-                📥 PNG
+                {exportingFormat === 'png' ? (
+                  <LoadingSpinner size="xs" color="white" />
+                ) : (
+                  '📥'
+                )} PNG
               </button>
               
               <button
                 onClick={() => exportChart('jpeg', `chart-${chartType}`)}
-                className="px-3 py-1 bg-secondary text-secondary-foreground rounded-md text-xs hover:bg-secondary/90 transition-colors"
+                disabled={exportingFormat === 'jpeg'}
+                className="px-3 py-1 bg-secondary text-secondary-foreground rounded-md text-xs hover:bg-secondary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
                 title="Download chart as JPEG image"
               >
-                📷 JPEG
+                {exportingFormat === 'jpeg' ? (
+                  <LoadingSpinner size="xs" color="gray" />
+                ) : (
+                  '📷'
+                )} JPEG
               </button>
               
               <button
-                onClick={() => {
-                  const embedCode = getEmbedCode();
-                  if (embedCode) {
-                    navigator.clipboard.writeText(embedCode).then(() => {
-                      // You could add a toast notification here
-                      console.log('Embed code copied to clipboard');
-                    }).catch(() => {
-                      // Fallback for older browsers
-                      const textArea = document.createElement('textarea');
-                      textArea.value = embedCode;
-                      document.body.appendChild(textArea);
-                      textArea.select();
-                      document.execCommand('copy');
-                      document.body.removeChild(textArea);
-                    });
+                onClick={async () => {
+                  setCopyingEmbed(true);
+                  try {
+                    const embedCode = getEmbedCode();
+                    if (embedCode) {
+                      // Small delay to show loading state
+                      await new Promise(resolve => setTimeout(resolve, 300));
+                      
+                      try {
+                        await navigator.clipboard.writeText(embedCode);
+                        addToast('Embed code copied to clipboard!', 'success');
+                      } catch (clipboardError) {
+                        // Fallback for older browsers
+                        const textArea = document.createElement('textarea');
+                        textArea.value = embedCode;
+                        document.body.appendChild(textArea);
+                        textArea.select();
+                        document.execCommand('copy');
+                        document.body.removeChild(textArea);
+                        addToast('Embed code copied to clipboard!', 'success');
+                      }
+                    } else {
+                      addToast('Chart not ready for embed code', 'error');
+                    }
+                  } catch (error) {
+                    addToast('Failed to copy embed code', 'error');
+                  } finally {
+                    setCopyingEmbed(false);
                   }
                 }}
-                className="px-3 py-1 bg-accent text-accent-foreground rounded-md text-xs hover:bg-accent/90 transition-colors"
+                disabled={copyingEmbed}
+                className="px-3 py-1 bg-accent text-accent-foreground rounded-md text-xs hover:bg-accent/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
                 title="Copy embed code to clipboard"
               >
-                📋 Embed
+                {copyingEmbed ? (
+                  <LoadingSpinner size="xs" color="gray" />
+                ) : (
+                  '📋'
+                )} Embed
               </button>
             </div>
           </div>

@@ -3,6 +3,7 @@ import FileUpload from './components/FileUpload';
 import ChartTypeSelector from './components/ChartTypeSelector';
 import ChartRenderer from './components/ChartRenderer';
 import ErrorBoundary from './components/ErrorBoundary';
+import { ToastProvider } from './components/ui/Toast';
 import { loadSampleData, getAllSamples } from './utils/sample-data-loader';
 import { testEdgeCases } from './utils/test-edge-cases';
 import { testBrowserCompatibility } from './utils/browser-testing';
@@ -62,7 +63,8 @@ function App() {
 
   return (
     <ErrorBoundary>
-      <div className="min-h-screen bg-background text-foreground font-sans">
+      <ToastProvider>
+        <div className="min-h-screen bg-background text-foreground font-sans">
         {/* Header */}
         <header className="bg-card border-b border-border shadow-sm">
           <div className="container mx-auto px-4 py-6">
@@ -222,7 +224,8 @@ function App() {
             </div>
           </div>
         </footer>
-      </div>
+        </div>
+      </ToastProvider>
     </ErrorBoundary>
   );
 }

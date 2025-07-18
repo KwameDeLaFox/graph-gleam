@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import LoadingSpinner from './ui/LoadingSpinner';
 import { getChartSuggestions } from '../utils/chart-config';
 
 const ChartTypeSelector = ({ selectedType, onTypeChange, data }) => {
@@ -80,8 +81,7 @@ const ChartTypeSelector = ({ selectedType, onTypeChange, data }) => {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-8">
-        <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
-        <span className="ml-3 text-muted-foreground">Analyzing data...</span>
+        <LoadingSpinner size="lg" text="Analyzing data..." />
       </div>
     );
   }
