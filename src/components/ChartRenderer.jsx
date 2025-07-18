@@ -57,7 +57,8 @@ const ChartRenderer = ({ data, chartType, isLoading }) => {
     }
 
     // Optimize data for performance
-    const optimizedData = optimizeForPerformance(rawData);
+    const optimizationResult = optimizeForPerformance(rawData);
+    const optimizedData = optimizationResult.data;
     
     // Get column names
     const columns = Object.keys(optimizedData[0] || {});
