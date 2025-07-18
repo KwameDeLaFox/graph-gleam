@@ -31,6 +31,7 @@ const FileUpload = ({ onFileUpload, isLoading }) => {
   };
 
   const handleFileSelect = async (e) => {
+    console.log('📄 File selected:', e.target.files?.[0]?.name);
     setIsFileDialogOpen(false);
     if (e.target.files && e.target.files[0]) {
       await processFile(e.target.files[0]);
@@ -93,8 +94,10 @@ const FileUpload = ({ onFileUpload, isLoading }) => {
   const openFileDialog = () => {
     // Prevent opening if already loading, processing, or if dialog is already open
     if (isLoading || uploadProgress > 0 || isFileDialogOpen) {
+      console.log('🚫 File dialog blocked:', { isLoading, uploadProgress, isFileDialogOpen });
       return;
     }
+    console.log('📁 Opening file dialog...');
     setIsFileDialogOpen(true);
     fileInputRef.current?.click();
   };
@@ -107,7 +110,6 @@ const FileUpload = ({ onFileUpload, isLoading }) => {
         type="file"
         accept=".csv,.xlsx,.xls"
         onChange={handleFileSelect}
-        onBlur={() => setIsFileDialogOpen(false)}
         className="hidden"
         disabled={isLoading}
       />
