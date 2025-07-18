@@ -82,4 +82,66 @@ export const prepareChartData = (rawData, chartType) => {
   };
 };
 
-export { ChartJS }; 
+// Helper to suggest appropriate chart types based on data
+export const getChartSuggestions = (data) => {
+  if (!data || !Array.isArray(data) || data.length === 0) {
+    return [];
+  }
+
+  const suggestions = [];
+  const headers = Object.keys(data[0] || {});
+  
+  // Count numeric vs text columns
+  const numericColumns = headers.filter(header => {
+    return data.some(row => typeof row[header] === 'number' || !isNaN(parseFloat(row[header])));
+  });
+  
+  const textColumns = headers.filter(header => {
+    return data.every(row => typeof row[header] === 'string' || isNaN(parseFloat(row[header])));
+  });
+
+  // Bar chart - good for categorical data
+  if (textColumns.length > 0 && numericColumns.length > 0) {
+    suggestions.push({
+      type: CHART_TYPES.BAR,
+      name: 'Bar Chart',
+      score: 90,
+      reason: 'Great for comparing categories'
+    });
+  }
+
+  // Line chart - good for time series or continuous data
+  if (numericColumns.length >= 2) {
+    suggestions.push({
+      type: CHART_TYPES.LINE,
+      name: 'Line Chart', 
+      score: 85,
+      reason: 'Perfect for showing trends over time'
+    });
+  }
+
+  // Pie chart - good for parts of a whole
+  if (textColumns.length === 1 && numericColumns.length === 1 && data.length <= 10) {
+    suggestions.push({
+      type: CHART_TYPES.PIE,
+      name: 'Pie Chart',
+      score: 75,
+      reason: 'Shows proportions of categories'
+    });
+  }
+
+  // Area chart - similar to line but filled
+  if (numericColumns.length >= 2) {
+    suggestions.push({
+      type: CHART_TYPES.AREA,
+      name: 'Area Chart',
+      score: 70,
+      reason: 'Shows cumulative trends'
+    });
+  }
+
+  // Sort by score (highest first)
+  return suggestions.sort((a, b) => b.score - a.score);
+};
+
+export { ChartJS };

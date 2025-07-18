@@ -625,4 +625,7 @@ const showKeyboardShortcutsModal = () => {
       document.removeEventListener('keydown', escapeHandler);
     }
   });
-}; 
+};
+
+// Alias for backward compatibility
+export const setupAccessibility = initializeAccessibility;

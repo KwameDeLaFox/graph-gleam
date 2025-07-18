@@ -299,4 +299,23 @@ export const validateLargeDataset = (data, options = {}) => {
     originalSize: data.length,
     sampleData: sampleData
   };
-}; 
+};
+
+/**
+ * General performance optimization function - optimizes data and returns chart-ready config
+ * @param {Array} data - Raw data array
+ * @param {Object} options - Optimization options
+ * @returns {Object} Optimized data and performance settings
+ */
+export const optimizeForPerformance = (data, options = {}) => {
+  // Optimize the data first
+  const optimizedData = optimizeDataForCharting(data, options);
+  
+  // Get performance-optimized chart options
+  const chartOptions = getPerformanceChartOptions(optimizedData.optimizedSize);
+  
+  return {
+    ...optimizedData,
+    chartOptions
+  };
+};

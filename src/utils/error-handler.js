@@ -463,4 +463,18 @@ export const createParseError = (message, filename, details = {}) => {
     ...details,
     action: 'check-data-format'
   };
-}; 
+};
+
+/**
+ * General purpose error handler - formats error and returns user-friendly version
+ * @param {Error|Object|string} error - Error to handle
+ * @param {Object} context - Additional context
+ * @returns {Object} User-friendly error object
+ */
+export const handleError = (error, context = {}) => {
+  // Add error to global handler
+  const formattedError = globalErrorHandler.addError(error, context);
+  
+  // Return user-friendly version
+  return globalErrorHandler.getUserFriendlyError(formattedError);
+};

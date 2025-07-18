@@ -13,7 +13,7 @@ import {
   Filler,
   RadialLinearScale
 } from 'chart.js';
-import { Bar, Line, Pie, Doughnut, Area, Scatter } from 'react-chartjs-2';
+import { Bar, Line, Pie, Doughnut, PolarArea, Scatter } from 'react-chartjs-2';
 import { optimizeForPerformance } from '../utils/performance-optimizer';
 
 // Register Chart.js components
@@ -376,8 +376,8 @@ const ChartRenderer = ({ data, chartType, isLoading }) => {
         return <Pie {...chartProps} />;
       case 'doughnut':
         return <Doughnut {...chartProps} />;
-      case 'area':
-        return <Area {...chartProps} />;
+          case 'area':
+      return <Line {...chartProps} />;
       case 'scatter':
         return <Scatter {...chartProps} />;
       default:
