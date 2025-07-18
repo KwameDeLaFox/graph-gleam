@@ -1,0 +1,26 @@
+/* Chart.js specific styles */
+.chart-container {
+  position: relative;
+  height: 400px;
+  width: 100%;
+  padding: 0;
+  margin: 0;
+}
+
+.chart-container canvas {
+  display: block !important;
+  height: 100% !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  max-height: 100% !important;
+}
+
+/* Ensure Chart.js defaults are preserved */
+.chart-container * {
+  box-sizing: content-box;
+}
+
+/* Let Chart.js handle its own colors and styling */
+.chart-container .chartjs-render-monitor {
+  animation: none !important;
+} 

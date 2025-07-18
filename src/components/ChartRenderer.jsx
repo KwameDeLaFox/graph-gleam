@@ -15,6 +15,7 @@ import {
 } from 'chart.js';
 import { Bar, Line, Pie, Doughnut, PolarArea, Scatter } from 'react-chartjs-2';
 import { optimizeForPerformance } from '../utils/performance-optimizer';
+import './charts.css';
 
 // Register Chart.js components
 ChartJS.register(
@@ -36,6 +37,15 @@ const ChartRenderer = ({ data, chartType, isLoading }) => {
   const [chartData, setChartData] = useState(null);
   const [chartOptions, setChartOptions] = useState(null);
   const [error, setError] = useState(null);
+
+  // Helper function to add transparency to colors
+  const addTransparency = (color, opacity = 0.2) => {
+    if (color.startsWith('rgba(')) {
+      // Replace the existing alpha value with the new opacity
+      return color.replace(/[\d\.]+\)$/, `${opacity})`);
+    }
+    return color;
+  };
 
   useEffect(() => {
     if (!data || !chartType) return;
@@ -74,61 +84,23 @@ const ChartRenderer = ({ data, chartType, isLoading }) => {
       typeof optimizedData[0][col] === 'string' && isNaN(optimizedData[0][col])
     );
 
-    // Get chart colors from CSS custom properties (design system integration)
+    // Use Chart.js default color palette
     const getChartColors = () => {
-      const colorVars = ['--chart-1', '--chart-2', '--chart-3', '--chart-4', '--chart-5'];
-      const colors = [];
-      
-      colorVars.forEach((colorVar, index) => {
-        try {
-          // Get the HSL values from CSS custom property
-          const hslValues = getComputedStyle(document.documentElement)
-            .getPropertyValue(colorVar)
-            .trim();
-          
-          if (hslValues) {
-            // CSS stores HSL as "151.3274 66.8639% 66.8627%" - convert to "hsl(151.3274, 66.8639%, 66.8627%)"
-            const hslColor = `hsl(${hslValues.replace(/\s+/g, ', ')})`;
-            colors.push(hslColor);
-          } else {
-            // Fallback colors if CSS custom properties fail
-            const fallbacks = [
-              'hsl(151, 67%, 67%)', // Green
-              'hsl(217, 91%, 60%)', // Blue
-              'hsl(258, 89%, 66%)', // Purple  
-              'hsl(38, 92%, 50%)',  // Orange
-              'hsl(160, 84%, 39%)'  // Emerald
-            ];
-            colors.push(fallbacks[index] || `hsl(${index * 60}, 70%, 55%)`);
-          }
-        } catch (error) {
-          console.warn(`Failed to get color for ${colorVar}:`, error);
-          // Ultimate fallback
-          const fallbacks = ['#22c55e', '#3b82f6', '#a855f7', '#f59e0b', '#10b981'];
-          colors.push(fallbacks[index] || '#6b7280');
-        }
-      });
-      
-      return colors;
+      return [
+        'rgba(255, 99, 132, 0.8)',   // Red
+        'rgba(54, 162, 235, 0.8)',   // Blue
+        'rgba(255, 205, 86, 0.8)',   // Yellow
+        'rgba(75, 192, 192, 0.8)',   // Green
+        'rgba(153, 102, 255, 0.8)',  // Purple
+        'rgba(255, 159, 64, 0.8)',   // Orange
+        'rgba(199, 199, 199, 0.8)',  // Grey
+        'rgba(83, 102, 255, 0.8)',   // Light Blue
+        'rgba(255, 99, 255, 0.8)',   // Pink
+        'rgba(99, 255, 132, 0.8)'    // Light Green
+      ];
     };
 
     const colors = getChartColors();
-    console.log('Chart colors from design system:', colors);
-    
-    // Helper function to add transparency to colors
-    const addTransparency = (color, opacity = 0.2) => {
-      if (color.startsWith('hsl(')) {
-        return color.replace('hsl(', `hsla(`).replace(')', `, ${opacity})`);
-      } else if (color.startsWith('#')) {
-        // Convert hex to rgba with opacity
-        const hex = color.replace('#', '');
-        const r = parseInt(hex.substr(0, 2), 16);
-        const g = parseInt(hex.substr(2, 2), 16);
-        const b = parseInt(hex.substr(4, 2), 16);
-        return `rgba(${r}, ${g}, ${b}, ${opacity})`;
-      }
-      return color;
-    };
 
     let chartData = {};
     let options = {};
@@ -202,8 +174,8 @@ const ChartRenderer = ({ data, chartType, isLoading }) => {
       datasets: [{
         data: values,
         backgroundColor: colors.slice(0, labels.length),
-        borderColor: 'var(--border)',
-        borderWidth: 1,
+        borderColor: '#fff',
+        borderWidth: 2,
       }]
     };
   };
@@ -247,26 +219,6 @@ const ChartRenderer = ({ data, chartType, isLoading }) => {
   };
 
   const getBaseChartOptions = () => {
-    // Compute all theme colors outside the isolated container
-    const getThemeColor = (cssVar, fallback) => {
-      try {
-        const value = getComputedStyle(document.documentElement)
-          .getPropertyValue(cssVar)
-          .trim();
-        return value ? `hsl(${value})` : fallback;
-      } catch {
-        return fallback;
-      }
-    };
-
-    const themeColors = {
-      foreground: getThemeColor('--foreground', '#1f2937'),
-      mutedForeground: getThemeColor('--muted-foreground', '#6b7280'),
-      border: getThemeColor('--border', '#e5e7eb'),
-      popover: getThemeColor('--popover', '#ffffff'),
-      popoverForeground: getThemeColor('--popover-foreground', '#1f2937')
-    };
-
     return {
       responsive: true,
       maintainAspectRatio: false,
@@ -274,58 +226,31 @@ const ChartRenderer = ({ data, chartType, isLoading }) => {
         legend: {
           position: 'top',
           labels: {
-            color: themeColors.foreground,
-            font: {
-              family: '"Outfit", sans-serif',
-              size: 12,
-              weight: '500',
-            },
             usePointStyle: true,
             padding: 20
           },
         },
         tooltip: {
-          backgroundColor: themeColors.popover,
-          titleColor: themeColors.popoverForeground,
-          bodyColor: themeColors.popoverForeground,
-          borderColor: themeColors.border,
+          backgroundColor: 'rgba(0, 0, 0, 0.8)',
+          titleColor: '#fff',
+          bodyColor: '#fff',
+          borderColor: 'rgba(0, 0, 0, 0.1)',
           borderWidth: 1,
           cornerRadius: 8,
           displayColors: true,
-          titleFont: {
-            family: '"Outfit", sans-serif',
-            weight: '600',
-          },
-          bodyFont: {
-            family: '"Outfit", sans-serif',
-          },
         },
       },
       scales: {
         x: {
           grid: {
-            color: themeColors.border,
+            color: 'rgba(0, 0, 0, 0.1)',
             drawBorder: false
-          },
-          ticks: {
-            color: themeColors.mutedForeground,
-            font: {
-              family: '"Outfit", sans-serif',
-              size: 11,
-            },
           },
         },
         y: {
           grid: {
-            color: themeColors.border,
+            color: 'rgba(0, 0, 0, 0.1)',
             drawBorder: false
-          },
-          ticks: {
-            color: themeColors.mutedForeground,
-            font: {
-              family: '"Outfit", sans-serif',
-              size: 11,
-            },
           },
         },
       },
@@ -334,9 +259,6 @@ const ChartRenderer = ({ data, chartType, isLoading }) => {
 
   const getBarChartOptions = () => {
     const baseOptions = getBaseChartOptions();
-    const foreground = getComputedStyle(document.documentElement)
-      .getPropertyValue('--foreground').trim();
-    
     return {
       ...baseOptions,
       plugins: {
@@ -344,12 +266,6 @@ const ChartRenderer = ({ data, chartType, isLoading }) => {
         title: {
           display: true,
           text: 'Bar Chart',
-          color: foreground ? `hsl(${foreground})` : '#1f2937',
-          font: {
-            family: '"Outfit", sans-serif',
-            size: 16,
-            weight: '600',
-          },
         },
       },
     };
@@ -357,9 +273,6 @@ const ChartRenderer = ({ data, chartType, isLoading }) => {
 
   const getLineChartOptions = () => {
     const baseOptions = getBaseChartOptions();
-    const foreground = getComputedStyle(document.documentElement)
-      .getPropertyValue('--foreground').trim();
-    
     return {
       ...baseOptions,
       plugins: {
@@ -367,12 +280,6 @@ const ChartRenderer = ({ data, chartType, isLoading }) => {
         title: {
           display: true,
           text: 'Line Chart',
-          color: foreground ? `hsl(${foreground})` : '#1f2937',
-          font: {
-            family: '"Outfit", sans-serif',
-            size: 16,
-            weight: '600',
-          },
         },
       },
     };
@@ -380,9 +287,6 @@ const ChartRenderer = ({ data, chartType, isLoading }) => {
 
   const getPieChartOptions = () => {
     const baseOptions = getBaseChartOptions();
-    const foreground = getComputedStyle(document.documentElement)
-      .getPropertyValue('--foreground').trim();
-    
     return {
       ...baseOptions,
       plugins: {
@@ -390,12 +294,6 @@ const ChartRenderer = ({ data, chartType, isLoading }) => {
         title: {
           display: true,
           text: 'Pie Chart',
-          color: foreground ? `hsl(${foreground})` : '#1f2937',
-          font: {
-            family: '"Outfit", sans-serif',
-            size: 16,
-            weight: '600',
-          },
         },
       },
     };
@@ -403,9 +301,6 @@ const ChartRenderer = ({ data, chartType, isLoading }) => {
 
   const getDoughnutChartOptions = () => {
     const baseOptions = getBaseChartOptions();
-    const foreground = getComputedStyle(document.documentElement)
-      .getPropertyValue('--foreground').trim();
-    
     return {
       ...baseOptions,
       plugins: {
@@ -413,12 +308,6 @@ const ChartRenderer = ({ data, chartType, isLoading }) => {
         title: {
           display: true,
           text: 'Doughnut Chart',
-          color: foreground ? `hsl(${foreground})` : '#1f2937',
-          font: {
-            family: '"Outfit", sans-serif',
-            size: 16,
-            weight: '600',
-          },
         },
       },
       cutout: '60%',
@@ -427,9 +316,6 @@ const ChartRenderer = ({ data, chartType, isLoading }) => {
 
   const getAreaChartOptions = () => {
     const baseOptions = getBaseChartOptions();
-    const foreground = getComputedStyle(document.documentElement)
-      .getPropertyValue('--foreground').trim();
-    
     return {
       ...baseOptions,
       plugins: {
@@ -437,12 +323,6 @@ const ChartRenderer = ({ data, chartType, isLoading }) => {
         title: {
           display: true,
           text: 'Area Chart',
-          color: foreground ? `hsl(${foreground})` : '#1f2937',
-          font: {
-            family: '"Outfit", sans-serif',
-            size: 16,
-            weight: '600',
-          },
         },
       },
     };
@@ -450,9 +330,6 @@ const ChartRenderer = ({ data, chartType, isLoading }) => {
 
   const getScatterChartOptions = () => {
     const baseOptions = getBaseChartOptions();
-    const foreground = getComputedStyle(document.documentElement)
-      .getPropertyValue('--foreground').trim();
-    
     return {
       ...baseOptions,
       plugins: {
@@ -460,12 +337,6 @@ const ChartRenderer = ({ data, chartType, isLoading }) => {
         title: {
           display: true,
           text: 'Scatter Plot',
-          color: foreground ? `hsl(${foreground})` : '#1f2937',
-          font: {
-            family: '"Outfit", sans-serif',
-            size: 16,
-            weight: '600',
-          },
         },
       },
     };
@@ -501,30 +372,7 @@ const ChartRenderer = ({ data, chartType, isLoading }) => {
     })();
 
     return (
-      <div className="chart-container" style={{
-        // Isolate from global CSS
-        all: 'initial',
-        fontFamily: 'var(--font-sans, "Outfit", sans-serif)',
-        fontSize: '14px',
-        // Restore Chart.js defaults
-        display: 'block',
-        position: 'relative',
-        height: '400px',
-        width: '100%',
-        // Ensure canvas renders properly
-        overflow: 'hidden'
-      }}>
-        <style>
-          {`
-            .chart-container canvas {
-              display: block !important;
-              height: 100% !important;
-              width: 100% !important;
-              max-width: 100% !important;
-              max-height: 100% !important;
-            }
-          `}
-        </style>
+      <div className="chart-container">
         {chartElement}
       </div>
     );
