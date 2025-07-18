@@ -45,8 +45,9 @@ function App() {
     setError(null);
     
     try {
-      const sampleData = await loadSampleData(sampleKey);
-      setData(sampleData);
+      const sampleResult = await loadSampleData(sampleKey);
+      // Extract just the data array from the sample result
+      setData(sampleResult.data);
     } catch (err) {
       setError(err.message);
     } finally {
