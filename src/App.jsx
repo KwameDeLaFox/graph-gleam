@@ -89,6 +89,12 @@ function App() {
     }
   };
 
+  const handleExportSVG = async () => {
+    if (chartRef.current) {
+      await chartRef.current.exportChart('svg', `graph-gleam-${selectedChartType}`);
+    }
+  };
+
   const handleCopyEmbed = async () => {
     if (chartRef.current) {
       const embedCode = chartRef.current.getEmbedCode();
@@ -240,22 +246,32 @@ function App() {
                 <h3 className="text-lg font-semibold text-foreground mb-4">
                   Export Options
                 </h3>
-                <div className="flex flex-wrap gap-3">
+                <div className="flex flex-col sm:flex-row gap-3">
                   <button
                     onClick={handleExportPNG}
-                    className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors flex items-center gap-2"
+                    className="px-4 py-2 bg-secondary text-secondary-foreground rounded-md border border-border hover:bg-accent hover:text-accent-foreground transition-colors flex items-center gap-2 text-sm"
+                    title="Export chart as high-quality PNG image"
                   >
                     📥 PNG Export
                   </button>
                   <button
                     onClick={handleExportJPEG}
-                    className="px-4 py-2 bg-secondary text-secondary-foreground rounded-md hover:bg-secondary/90 transition-colors flex items-center gap-2"
+                    className="px-4 py-2 bg-secondary text-secondary-foreground rounded-md border border-border hover:bg-accent hover:text-accent-foreground transition-colors flex items-center gap-2 text-sm"
+                    title="Export chart as JPEG image"
                   >
                     📷 JPEG Export
                   </button>
                   <button
+                    onClick={handleExportSVG}
+                    className="px-4 py-2 bg-secondary text-secondary-foreground rounded-md border border-border hover:bg-accent hover:text-accent-foreground transition-colors flex items-center gap-2 text-sm"
+                    title="Export chart as scalable SVG vector image"
+                  >
+                    🎨 SVG Export
+                  </button>
+                  <button
                     onClick={handleCopyEmbed}
-                    className="px-4 py-2 bg-muted text-muted-foreground rounded-md hover:bg-muted/80 transition-colors flex items-center gap-2"
+                    className="px-4 py-2 bg-secondary text-secondary-foreground rounded-md border border-border hover:bg-accent hover:text-accent-foreground transition-colors flex items-center gap-2 text-sm"
+                    title="Copy embed code for the chart"
                   >
                     📋 Copy Embed
                   </button>
