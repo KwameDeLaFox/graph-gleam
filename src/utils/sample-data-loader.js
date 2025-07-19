@@ -19,7 +19,8 @@ export const SAMPLE_FILES = {
     description: 'Expense breakdown by category - ideal for pie charts',
     chartTypes: ['pie'],
     columns: ['Category', 'Amount', 'Percentage', 'Description']
-  }
+  },
+
 };
 
 // Load CSV sample data
@@ -124,6 +125,8 @@ export const loadExcelSample = async () => {
     throw new Error('Failed to load Excel sample: ' + error.message);
   }
 };
+
+
 
 // Generic sample loader that detects file type
 export const loadSampleData = async (sampleKey) => {

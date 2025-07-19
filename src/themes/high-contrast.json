@@ -1,0 +1,24 @@
+{
+  "id": "high-contrast",
+  "name": "High Contrast",
+  "description": "Bold colors with sharp edges and strong shadows",
+  "variables": {
+    "--chart-1": "hsl(0, 100%, 50%)",
+    "--chart-2": "hsl(45, 100%, 50%)",
+    "--chart-3": "hsl(280, 100%, 50%)",
+    "--chart-4": "hsl(120, 100%, 50%)",
+    "--chart-5": "hsl(0, 0%, 0%)",
+    "--font-sans": "Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif",
+    "--radius": "0rem",
+    "--shadow-sm": "0 2px 4px 0 rgb(0 0 0 / 0.5)",
+    "--shadow": "0 4px 8px 0 rgb(0 0 0 / 0.6), 0 2px 4px -2px rgb(0 0 0 / 0.5)",
+    "--shadow-md": "0 8px 16px 0 rgb(0 0 0 / 0.7), 0 4px 8px -4px rgb(0 0 0 / 0.6)",
+    "--background": "hsl(0, 0%, 100%)",
+    "--foreground": "hsl(0, 0%, 0%)",
+    "--card": "hsl(0, 0%, 100%)",
+    "--card-foreground": "hsl(0, 0%, 0%)",
+    "--border": "hsl(0, 0%, 0%)",
+    "--primary": "hsl(0, 100%, 50%)",
+    "--primary-foreground": "hsl(0, 0%, 100%)"
+  }
+} 

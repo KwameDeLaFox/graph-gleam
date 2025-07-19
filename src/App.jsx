@@ -2,16 +2,19 @@ import React, { useState } from 'react';
 import FileUpload from './components/FileUpload';
 import ChartTypeSelector from './components/ChartTypeSelector';
 import ChartRenderer from './components/ChartRenderer';
+import ThemeSelector from './components/ThemeSelector';
 import ErrorBoundary from './components/ErrorBoundary';
 import { ToastProvider } from './components/ui/Toast';
 import { loadSampleData, getAllSamples } from './utils/sample-data-loader';
 import { testEdgeCases } from './utils/test-edge-cases';
-import { testBrowserCompatibility } from './utils/browser-testing';
+import { quickCompatibilityCheck } from './utils/browser-testing';
 import { setupAccessibility } from './utils/accessibility-helpers';
+// Theme reset is now handled by ChartRenderer component
 
 function App() {
   const [data, setData] = useState(null);
   const [selectedChartType, setSelectedChartType] = useState('bar');
+  const [selectedTheme, setSelectedTheme] = useState('default');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [compatibilityScore, setCompatibilityScore] = useState(null);
@@ -22,8 +25,12 @@ function App() {
     setupAccessibility();
     
     // Test browser compatibility
-    const score = testBrowserCompatibility();
-    setCompatibilityScore(score);
+    const check = quickCompatibilityCheck();
+    setCompatibilityScore({
+      score: check.compatible ? 95 : 50,
+      browser: check.browser,
+      version: check.version
+    });
     
     // Test edge cases
     testEdgeCases();
@@ -35,6 +42,8 @@ function App() {
     
     try {
       setData(fileData);
+      // Reset theme to default when new data is uploaded
+      setSelectedTheme('default');
     } catch (err) {
       setError(err.message);
     } finally {
@@ -50,6 +59,8 @@ function App() {
       const sampleResult = await loadSampleData(sampleKey);
       // Extract just the data array from the sample result
       setData(sampleResult.data);
+      // Reset theme to default when new data is loaded
+      setSelectedTheme('default');
     } catch (err) {
       setError(err.message);
     } finally {
@@ -59,6 +70,36 @@ function App() {
 
   const handleChartTypeChange = (chartType) => {
     setSelectedChartType(chartType);
+  };
+
+  const handleThemeSelect = (themeId) => {
+    setSelectedTheme(themeId);
+    // Theme is now applied scoped to the chart container in ChartRenderer
+  };
+
+  const handleExportPNG = async () => {
+    if (chartRef.current) {
+      await chartRef.current.exportChart('png', `graph-gleam-${selectedChartType}`);
+    }
+  };
+
+  const handleExportJPEG = async () => {
+    if (chartRef.current) {
+      await chartRef.current.exportChart('jpeg', `graph-gleam-${selectedChartType}`);
+    }
+  };
+
+  const handleCopyEmbed = async () => {
+    if (chartRef.current) {
+      const embedCode = chartRef.current.getEmbedCode();
+      try {
+        await navigator.clipboard.writeText(embedCode);
+        // You can add a toast notification here if you have a toast system
+        console.log('Embed code copied to clipboard');
+      } catch (err) {
+        console.error('Failed to copy embed code:', err);
+      }
+    }
   };
 
   return (
@@ -177,8 +218,51 @@ function App() {
                   ref={chartRef}
                   data={data}
                   chartType={selectedChartType}
+                  themeId={selectedTheme}
                   isLoading={isLoading}
                 />
+              </section>
+            )}
+
+            {/* Theme Selector */}
+            {data && selectedChartType && (
+              <section className="bg-card rounded-lg border border-border shadow-sm p-6">
+                <ThemeSelector
+                  onThemeSelect={handleThemeSelect}
+                  selectedThemeId={selectedTheme}
+                />
+              </section>
+            )}
+
+            {/* Export Options */}
+            {data && selectedChartType && (
+              <section className="bg-card rounded-lg border border-border shadow-sm p-6">
+                <h3 className="text-lg font-semibold text-foreground mb-4">
+                  Export Options
+                </h3>
+                <div className="flex flex-wrap gap-3">
+                  <button
+                    onClick={handleExportPNG}
+                    className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors flex items-center gap-2"
+                  >
+                    📥 PNG Export
+                  </button>
+                  <button
+                    onClick={handleExportJPEG}
+                    className="px-4 py-2 bg-secondary text-secondary-foreground rounded-md hover:bg-secondary/90 transition-colors flex items-center gap-2"
+                  >
+                    📷 JPEG Export
+                  </button>
+                  <button
+                    onClick={handleCopyEmbed}
+                    className="px-4 py-2 bg-muted text-muted-foreground rounded-md hover:bg-muted/80 transition-colors flex items-center gap-2"
+                  >
+                    📋 Copy Embed
+                  </button>
+                </div>
+                <p className="text-sm text-muted-foreground mt-2">
+                  Exported files will include the selected theme styling
+                </p>
               </section>
             )}
 

@@ -1,0 +1,24 @@
+{
+  "id": "corporate",
+  "name": "Corporate",
+  "description": "Professional blues and greys with clean typography",
+  "variables": {
+    "--chart-1": "hsl(220, 70%, 50%)",
+    "--chart-2": "hsl(220, 60%, 40%)",
+    "--chart-3": "hsl(220, 50%, 30%)",
+    "--chart-4": "hsl(200, 60%, 45%)",
+    "--chart-5": "hsl(200, 50%, 35%)",
+    "--font-sans": "Inter, system-ui, sans-serif",
+    "--radius": "0.25rem",
+    "--shadow-sm": "0 1px 2px 0 rgb(0 0 0 / 0.05)",
+    "--shadow": "0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1)",
+    "--shadow-md": "0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)",
+    "--background": "hsl(0 0% 100%)",
+    "--foreground": "hsl(222.2 84% 4.9%)",
+    "--card": "hsl(0 0% 100%)",
+    "--card-foreground": "hsl(222.2 84% 4.9%)",
+    "--border": "hsl(214.3 31.8% 91.4%)",
+    "--primary": "hsl(220, 70%, 50%)",
+    "--primary-foreground": "hsl(210 40% 98%)"
+  }
+} 

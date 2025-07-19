@@ -99,6 +99,12 @@ The ChartRenderer component provides a complete charting solution that transform
 - Affects text, grid, and background colors
 - Consistent with app theming
 
+**`themeId: string`** *(optional, default: 'corporate')*
+- Theme identifier: `'corporate'`, `'pastel-fun'`, `'high-contrast'`
+- Applies custom color schemes to chart
+- Scoped to chart container only
+- Overrides default theme colors
+
 **`onError: Function`** *(optional)*
 - Called when rendering fails
 - Signature: `(error) => void`
@@ -435,6 +441,72 @@ const FullWorkflow = () => {
 
 // Dark theme
 <ChartRenderer theme="dark" data={data} chartType="bar" />
+
+// Custom theme with themeId
+<ChartRenderer 
+  themeId="corporate" 
+  data={data} 
+  chartType="bar" 
+/>
+
+// Pastel fun theme
+<ChartRenderer 
+  themeId="pastel-fun" 
+  data={data} 
+  chartType="line" 
+/>
+
+// High contrast theme for accessibility
+<ChartRenderer 
+  themeId="high-contrast" 
+  data={data} 
+  chartType="bar" 
+/>
+```
+
+### Available Themes
+
+**Corporate Theme** (`themeId="corporate"`)
+- Professional blues and grays
+- Perfect for business presentations
+- Clean, formal appearance
+
+**Pastel Fun Theme** (`themeId="pastel-fun"`)
+- Soft pastels and bright accents
+- Great for creative projects
+- Playful, colorful appearance
+
+**High Contrast Theme** (`themeId="high-contrast"`)
+- High contrast black, white, and bright colors
+- Ideal for accessibility
+- Bold, clear appearance
+
+### Theme Integration with ThemeSelector
+
+```javascript
+import React, { useState } from 'react';
+import ChartRenderer from './ChartRenderer';
+import ThemeSelector from './ThemeSelector';
+
+function ChartWithTheme() {
+  const [selectedTheme, setSelectedTheme] = useState('corporate');
+  const [chartData, setChartData] = useState(/* your data */);
+
+  return (
+    <div>
+      <ChartRenderer 
+        data={chartData}
+        chartType="bar"
+        themeId={selectedTheme}
+      />
+      
+      <ThemeSelector 
+        selectedTheme={selectedTheme}
+        onThemeChange={setSelectedTheme}
+      />
+    </div>
+  );
+}
 ```
 
 ### Responsive Behavior

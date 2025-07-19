@@ -1,0 +1,24 @@
+{
+  "id": "pastel-fun",
+  "name": "Pastel Fun",
+  "description": "Soft, playful colors with rounded corners and gentle shadows",
+  "variables": {
+    "--chart-1": "hsl(350, 70%, 75%)",
+    "--chart-2": "hsl(280, 70%, 75%)",
+    "--chart-3": "hsl(60, 70%, 75%)",
+    "--chart-4": "hsl(150, 70%, 75%)",
+    "--chart-5": "hsl(200, 70%, 75%)",
+    "--font-sans": "Comic Sans MS, cursive, system-ui, sans-serif",
+    "--radius": "1rem",
+    "--shadow-sm": "0 2px 4px 0 rgb(0 0 0 / 0.1)",
+    "--shadow": "0 4px 8px 0 rgb(0 0 0 / 0.15), 0 2px 4px -2px rgb(0 0 0 / 0.1)",
+    "--shadow-md": "0 8px 16px 0 rgb(0 0 0 / 0.15), 0 4px 8px -4px rgb(0 0 0 / 0.1)",
+    "--background": "hsl(60, 30%, 98%)",
+    "--foreground": "hsl(280, 20%, 20%)",
+    "--card": "hsl(60, 30%, 98%)",
+    "--card-foreground": "hsl(280, 20%, 20%)",
+    "--border": "hsl(350, 30%, 85%)",
+    "--primary": "hsl(350, 70%, 75%)",
+    "--primary-foreground": "hsl(280, 20%, 20%)"
+  }
+} 
